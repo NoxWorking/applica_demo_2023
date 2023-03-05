@@ -116,6 +116,9 @@
                 <Button x:Name="BtnSave" Content="Save" Command="{Binding BtnSave, Mode=OneWay}"
                     Height="46" Margin="0,0,10,233"
                     VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="143" />
+
+                <CheckBox Content="CheckBox" IsChecked="{Binding IsMyCheckBox,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="608,361,23,146" />
+
             </Grid>
         </Border>
 

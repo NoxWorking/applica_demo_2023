@@ -2,6 +2,9 @@
  * Applica, Inc.
  * By José O. Lara
  * 2023.02.28
+ * 
+ * MVVM
+ * MV
  */
 
 namespace applica_demo_2023.src.core.viewModels {
@@ -26,6 +29,10 @@ namespace applica_demo_2023.src.core.viewModels {
     using applica_demo_2023.src.core.data.configuration;
     using System.Data;
     using System.Reflection;
+    using System.IO;
+    using System.Text;
+    using Microsoft.Office.Interop.Excel;
+
 
     public partial class MainVm : ObservableObject {
 
@@ -52,6 +59,27 @@ namespace applica_demo_2023.src.core.viewModels {
         [ObservableProperty]
         public string _TxtTitel = "";
 
+        [ObservableProperty]
+        private bool _isMyCheckBox;
+
+        private int _Totales;
+
+        private int _TotalesDeReclamaciones;
+
+
+
+        /*
+        public bool IsMyCheckBox
+        {
+            get => _isMyCheckBox;
+            set
+            {
+                _isMyCheckBox = value;
+                OnPropertyChanged("IsMyCheckBox");
+            }
+        }
+        */
+
         #endregion
 
         #region Constructor
@@ -61,8 +89,10 @@ namespace applica_demo_2023.src.core.viewModels {
             BtnFileOut = new RelayCommand(async () => await ClickBtnFileOut());
             BtnSave = new RelayCommand(async () => await ClickBtnSave());
 
+            IsMyCheckBox = true;
+
             TxtTitel =
-            $@"Applica Demo 2023 
+            $@"Applica Demo 2023  
 Version: {GetType().Assembly.GetName().Version}";
 
 
@@ -97,10 +127,52 @@ Version: {GetType().Assembly.GetName().Version}";
                 bool? result = op.ShowDialog();
                 if (result != null && result.Value) {
                     TxtVdeFile = op.FileName;
+
+                    //DbfConfiguration dbfConfiguration = new DbfConfiguration(TxtVdeFile);
+                    //_OpenDbfService = new OpenDbfService(dbfConfiguration);
+
+                    //DbfConfiguration dbfConfiguration = new(TxtVdeFile);
+                    //_OpenDbfService = new OpenDbfService(dbfConfiguration);
+
+                    //_OpenDbfService = new OpenDbfService(new DbfConfiguration(TxtVdeFile));
                     _OpenDbfService = new OpenDbfService(new(TxtVdeFile));
-                    DataTable T = await _OpenDbfService.GetAllAsDataTableAsync();
+
+                    System.Data.DataTable T = await _OpenDbfService.GetAllAsDataTableAsync();
                     ListLog.Add($"Vde File: {TxtVdeFile}");
                     ListLog.Add($"Total de Record: {T.Rows.Count:N0}");
+                    _Totales = T.Rows.Count;
+
+                    int count = 0;
+                    /*
+                    
+                    for (int i=0;i<T.Rows.Count;i++) {
+
+                        string v1Page = T.Rows[i]["V1PAGE"].ToString() ?? "" ;
+
+                        if (v1Page != "99")
+                        {
+                            count++;
+                            //ListLog.Add(count.ToString() + "-" +   T.Rows[i]["V1PAGE"].ToString() ?? "Error");
+                            string msg = $"{count:N0} - {T.Rows[i]["v1page"]}";
+                            ListLog.Add (msg);
+                        }
+                    }
+
+                    foreach (DataRow row in T.Rows)
+                    {
+                        count++;
+                        string msg = $"{count:N0} -  {row["v1page"]}";
+                        ListLog.Add(msg);
+                    }
+
+                    */
+
+                    //int totalRec = T.Select("v1page <> '99'").Length;
+                    //ListLog.Add($"Total de Rec: {totalRec:N0}");
+
+                    ListLog.Add($"Total de Reclamaciones: {T.Select("v1page <> '99'").Length:N0}");
+                    _TotalesDeReclamaciones = T.Select("v1page <> '99'").Length;
+
                 }
 
             } catch (Exception err) {
@@ -130,8 +202,38 @@ Version: {GetType().Assembly.GetName().Version}";
 
         private Task ClickBtnSave() {
             try {
+             
+                Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+                Workbook wb;
+                Worksheet ws;
 
-                throw new NotImplementedException();
+                wb = excel.Workbooks.Add(XlWBATemplate.xlWBATWorksheet);
+                ws = wb.Worksheets[1];
+
+                Microsoft.Office.Interop.Excel.Range cellRange = ws.Range["C3:G3"];
+
+
+               
+
+
+                string[] info = new[] { "Numero totales", Convert.ToString(_Totales), " ", "Reclamaciones",  Convert.ToString(_TotalesDeReclamaciones) };
+
+                cellRange.set_Value(XlRangeValueDataType.xlRangeValueDefault, info);
+
+                wb.SaveAs(TxtFileOut);
+                wb.Close();
+
+
+
+
+
+
+                IsMyCheckBox = IsMyCheckBox ? false: true;
+              
+
+                //TODO: ADD !!!!!
+                MessageBox.Show("Saved","saved",MessageBoxButton.OK,MessageBoxImage.Exclamation);
+
 
             } catch (Exception err) {
                 MessageBox.Show(err.ToString(), "ClickBtnSave", MessageBoxButton.OK, MessageBoxImage.Error);

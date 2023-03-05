@@ -10,6 +10,6 @@ namespace applica_demo_2023.src.core.data.configuration {
         public string MyDbfPath { get; }
 
         public DbfConfiguration(string myDbfPath) => MyDbfPath = myDbfPath;
-
+        
     }
 }
